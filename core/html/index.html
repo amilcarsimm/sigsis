@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% load i18n %}
+
+{% block content %}
+		<div id="situa-geral">			
+			<div id="situa">
+			{% for index in indexs %}
+			    <!-- #para não aparecer as tags html -->
+			    {% autoescape off %}
+			    <h2 class="title2">{{index.index_titulo}}</h2>
+			    {{index.index_text}}
+			    {% endautoescape %}
+			{% endfor %}
+    		</div>	
+		</div>
+{% endblock content %}

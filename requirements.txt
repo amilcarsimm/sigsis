@@ -1,0 +1,26 @@
+# 1) Instalar pacotes de sistema:
+#    sudo apt install mysql-server mysql-client
+#    sudo apt install python-virtualenv
+#    sudo apt install libfreetype6-dev libpng-dev libxft-dev libmysqlclient-dev
+#
+# 2) Atualizar pip (conforme https://stackoverflow.com/questions/26575587/cant-install-scipy-through-pip)
+#    python3 -m pip install --upgrade pip
+#
+# 3) Instalar os pacotes Python 3:
+#    pip install -r requirements.txt
+#
+# 4) Atualizar "path" em sigsis/settings.py.
+#
+# 5) Executar o Django com:
+#    python manage.py runserver
+#
+numpy
+scipy
+matplotlib
+image
+pillow
+django==1.8.11
+django-tinymce
+django-tinymce-filebrowser
+django-widget-tweaks
+mysqlclient
