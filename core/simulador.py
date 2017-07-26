@@ -71,7 +71,7 @@ class Simulador(forms.Form):
     fs = forms.FloatField(label='Taxa de amostragem <i>f</i><sub>s</sub> [Hz]', widget=forms.NumberInput(attrs={'required': True, 'class':'input_menor', 'tabindex':11}))
     quantiza = forms.IntegerField(label='N⁰ de Níveis de Quantização [2-256]', help_text='O valor deverá estar entre 2 e 256, pensando em potências de 2 (2¹ a 2⁸), teremos valores que variarão entre 1 bit a 8 bits.', min_value=2, max_value=256, widget=forms.NumberInput(attrs={'required': True, 'class':'input_menor', 'tabindex':11}))
     niveis = forms.CharField(label='Níveis de Quantização', help_text='Para o Quantizador Genérico. Em ordem crescente e separados por espaço em branco.', max_length=100, widget=forms.TextInput(attrs={'required': True, 'strip': True, 'tabindex':11}))
-    limiar_inf = forms.FloatField(label='Limiar inferior do nível [0-1]', help_text='Para o Quantizador Genérico. O número entre 0 e 1, refere-se a fração ou percentual para o limiar inferior do nível. Default: metade ou 0,5.', min_value=0.0, max_value=1.0, widget=forms.NumberInput(attrs={'required': True, 'class':'input_menor', 'tabindex':11}))
+    limiar_inf = forms.FloatField(label='Limiar inferior do nível [0-1]', help_text='Para o Quantizador Genérico. O número entre 0 e 1, refere-se a fração ou percentual para o limiar inferior do nível. Default: metade ou 0,5.', min_value=0.0, max_value=1.0, widget=forms.NumberInput(attrs={'required': True, 'class':'input_menor', 'step': '0.1', 'tabindex':11}))
     plot_sinal = forms.BooleanField(label='Sinal [Vermelho]', required=False, widget=forms.CheckboxInput(attrs={'tabindex':11}))
     plot_fourier = forms.BooleanField(label='Transformada rápida de Fourier [Azul]', required=False, widget=forms.CheckboxInput(attrs={'tabindex':11}))
     plot_amostras = forms.BooleanField(label='Amostras [Verde - Tracejado]', required=False, widget=forms.CheckboxInput(attrs={'tabindex':11}))
@@ -217,7 +217,7 @@ def quantizacao_niveis(request, s, s2, dc, ampl, quantiza, niveis, limiar_inf, p
             vetor_niveis_lim.insert(i, niveis[i])
             vetor_niveis_lim.insert(i, lim)
         vetor_niveis_lim.insert(i, amax(niveis))
-        sorted(vetor_niveis_lim)
+        vetor_niveis_lim.sort()
 
     return vetor_niveis_lim
 
@@ -295,17 +295,28 @@ def showimage(request, t_start, t_stop, dc, ampl, freq, desl, fs, s_npf, titulo,
     
     verifica_niveis(request, dc, ampl, niveis)
     flag_subplot = subplot_image(request, plot_sinal, plot_fourier, plot_amostras, plot_quant_g, plot_quant_mt, plot_quant_mr, plot_quant_eq_g, plot_quant_eq_mt, plot_quant_eq_mr)
-        
+    
+    # para não embaralhar os rótulos do eixo x
+    t2_x = t2
+    if (len(t2)>30 and len(t2)<50):
+        t2_x = []
+        for i in frange(t2[0], t2[len(t2)-1], 2/fs):t2_x.append(i)
+    elif (len(t2)>50):
+        t2_x = []
+        for i in frange(t2[0], t2[len(t2)-1], 4/fs):t2_x.append(i)
+    else:t2_x = t2
+               
+    fig = plt.figure() # para adicionar o title a figura e não aos subplots ou plot
+
     # para plotar os múltiplos sinais
     # verifica arrays muito longos
-    fig = plt.figure() # para adicionar o title a figura e não aos subplots ou plot
     
     if len(s) > 12000 or len(t2) > 1000:
         msg = 'Simulação sem possibilidade\nde visualização.\nVerifique os parâmetros.'
-        plt.text((t_stop + t_start)/2, (dc + ampl/2), msg, ha="center", va="top", size=20, color='k', bbox=dict(boxstyle="circle, pad=0.5", fc="r", ec="y", lw=1, alpha=0.5)), tick_params(direction='out', length=6, width=2, colors='r')
+        plt.text(0.5, 0.5, msg, ha="center", va="center", size=20, color='k', bbox=dict(boxstyle="circle, pad=0.5", fc="r", ec="y", lw=1, alpha=0.5)), tick_params(direction='out', length=6, labelbottom="off", labelleft="off")
     elif verifica_niveis(request, dc, ampl, niveis)[0]:
         msg = verifica_niveis(request, dc, ampl, niveis)[0]
-        plt.text((t_stop + t_start)/2, (dc + ampl/2), msg, ha="center", va="top", size=20, color='k', bbox=dict(boxstyle="circle, pad=0.5", fc="r", ec="y", lw=1, alpha=0.5)), tick_params(direction='out', length=6, width=2, colors='r')
+        plt.text(0.5, 0.5, msg, ha="center", va="center", size=20, color='k', bbox=dict(boxstyle="circle, pad=0.5", fc="r", ec="y", lw=1, alpha=0.5)), tick_params(direction='out', length=6, labelbottom="off", labelleft="off")
     else:
         if (plot_sinal):
             if (flag_subplot == 3): plt.subplot(211)
@@ -327,6 +338,7 @@ def showimage(request, t_start, t_stop, dc, ampl, freq, desl, fs, s_npf, titulo,
             # para plotagem
             if (flag_subplot == 3): plt.subplot(212)
             plot(freqs, power, '-', linewidth=1.5, color='blue', label='Transformada rápida de Fourier')
+            #plot(t3, s5, '-', linewidth=1.5, color='blue', label='Transformada rápida de Fourier')
             plt.ylabel('$F(\omega)$')
             plt.xlabel('$\omega$')
             plt.legend(fancybox=True, loc='upper right', shadow=True, fontsize='small', ncol=2)
@@ -337,7 +349,7 @@ def showimage(request, t_start, t_stop, dc, ampl, freq, desl, fs, s_npf, titulo,
             stem(t2, s2, linefmt='g--', markerfmt='go', linewidth=1, label='Amostras', basefmt='k-')
             plt.ylabel('$f(t)$ [V]')
             plt.xlabel('$t$ [s]')
-            xticks(t2, rotation=45, fontsize=8)
+            xticks(t2_x, rotation=90, fontsize=8)
             plt.legend(fancybox=True, loc='upper right', shadow=True, fontsize='small', ncol=2)
             plt.xlim(min(t), max(t))
             plt.grid(which='major', axis='both', color='k', linestyle=':')
@@ -350,7 +362,7 @@ def showimage(request, t_start, t_stop, dc, ampl, freq, desl, fs, s_npf, titulo,
             plot(t2, sg, '-', linewidth=1.2, drawstyle='steps-post', color='cyan', label='Sinal Quantizado - Genérico')
             plt.ylabel('$f(t)$ [V]')
             plt.xlabel('$t$ [s]')
-            xticks(t2, rotation=45, fontsize=8)
+            xticks(t2_x, rotation=90, fontsize=8)
             plt.legend(fancybox=True, loc='upper right', shadow=True, fontsize='small', ncol=2)
             plt.xlim(min(t), max(t))
             plt.grid(which='major', axis='both', color='k', linestyle=':')
@@ -360,7 +372,7 @@ def showimage(request, t_start, t_stop, dc, ampl, freq, desl, fs, s_npf, titulo,
             plot(t2, eq_g, ':', linewidth=1.5, drawstyle='steps-post', color='grey', label='Erro de Quantização - Genérico')
             plt.ylabel('$f(t)$ [V]')
             plt.xlabel('$t$ [s]')
-            xticks(t2, rotation=45, fontsize=8)
+            xticks(t2_x, rotation=90, fontsize=8)
             plt.legend(fancybox=True, loc='upper right', shadow=True, fontsize='small', ncol=2)
             plt.xlim(min(t), max(t))
             plt.grid(which='major', axis='both', color='k', linestyle=':')
@@ -370,7 +382,7 @@ def showimage(request, t_start, t_stop, dc, ampl, freq, desl, fs, s_npf, titulo,
             plot(t2, s3, '-', linewidth=1.2, drawstyle='steps-post', color='blue', label='Sinal Quantizado - Mid-tread')
             plt.ylabel('$f(t)$ [V]')
             plt.xlabel('$t$ [s]')
-            xticks(t2, rotation=45, fontsize=8)
+            xticks(t2_x, rotation=90, fontsize=8)
             plt.legend(fancybox=True, loc='upper right', shadow=True, fontsize='small', ncol=2)
             plt.xlim(min(t), max(t))
             plt.grid(which='major', axis='both', color='k', linestyle=':')
@@ -380,7 +392,7 @@ def showimage(request, t_start, t_stop, dc, ampl, freq, desl, fs, s_npf, titulo,
             plot(t2, eq_mt, ':', linewidth=1.5, drawstyle='steps-post', color='grey', label='Erro de Quantização - Mid-tread')
             plt.ylabel('$f(t)$ [V]')
             plt.xlabel('$t$ [s]')
-            xticks(t2, rotation=45, fontsize=8)
+            xticks(t2_x, rotation=90, fontsize=8)
             plt.legend(fancybox=True, loc='upper right', shadow=True, fontsize='small', ncol=2)
             plt.xlim(min(t), max(t))
             plt.grid(which='major', axis='both', color='k', linestyle=':')
@@ -390,7 +402,7 @@ def showimage(request, t_start, t_stop, dc, ampl, freq, desl, fs, s_npf, titulo,
             plot(t2, s4, linewidth=1.2, drawstyle='steps-post', color='magenta', label='Sinal Quantizado - Mid-rise'),
             plt.ylabel('$f(t)$ [V]')
             plt.xlabel('$t$ [s]')
-            xticks(t2, rotation=45, fontsize=8)
+            xticks(t2_x, rotation=90, fontsize=8)
             plt.legend(fancybox=True, loc='upper right', shadow=True, fontsize='small', ncol=2)
             plt.xlim(min(t), max(t))
             plt.grid(which='major', axis='both', color='k', linestyle=':')
@@ -400,29 +412,31 @@ def showimage(request, t_start, t_stop, dc, ampl, freq, desl, fs, s_npf, titulo,
             plot(t2, eq_mr, ':', linewidth=1.5, drawstyle='steps-post', color='black', label='Erro de Quantização - Mid-rise')
             plt.ylabel('$f(t)$ [V]')
             plt.xlabel('$t$ [s]')
-            xticks(t2, rotation=45, fontsize=8)
+            xticks(t2_x, rotation=90, fontsize=8)
             plt.legend(fancybox=True, loc='upper right', shadow=True, fontsize='small', ncol=2)
             plt.xlim(min(t), max(t))
             plt.grid(which='major', axis='both', color='k', linestyle=':')
         # caso nenhuma simulação seja marcada
         if(not plot_sinal and not plot_fourier and not plot_amostras and not plot_quant_g and not plot_quant_mt and not plot_quant_mr and not plot_quant_eq_g and not plot_quant_eq_mt and not plot_quant_eq_mr):
             msg = 'Nenhuma simulação\nfoi selecionada.'
-            plt.text((t_stop+t_start)/2, (dc+ampl/2), msg, ha="center", va="center", size=20, color='red', bbox=dict(boxstyle="circle, pad=0.5", fc="yellow", ec="r", lw=1, alpha=0.5)), tick_params(direction='out', length=6, width=2, colors='r')
+            #plt.text((t_stop+t_start)/2, (dc+ampl/2), msg, ha="center", va="center", size=20, color='red', bbox=dict(boxstyle="circle, pad=0.5", fc="yellow", ec="r", lw=1, alpha=0.5)), tick_params(direction='out', length=6, width=2, colors='r')
+            plt.text(0.5, 0.5, msg, ha="center", va="center", size=20, color='k', bbox=dict(boxstyle="circle, pad=0.5", fc="yellow", ec="y", lw=1, alpha=0.5)), tick_params(direction='out', length=6, labelbottom="off", labelleft="off")
         
     # Para a imagem do gráfico
     # para que o gráfico tem uma margem em baixo e outra um pouco maior em cima para a legenda
     ymin, ymax = ylim()   # return the current ylim
-    ylim(ymin-0.1*(ymax - ymin), ymax+0.35*(ymax - ymin))  # set the ylim to ymin, ymax
+    ylim(ymin - 0.1 * (ymax - ymin), ymax + 0.35 * (ymax - ymin))  # set the ylim to ymin, ymax
     
     # título
     fig.suptitle(titula_grafico(request, dc, ampl, freq, desl, fs, s_npf, titulo, plot_sinal, plot_fourier, plot_amostras, plot_quant_g, plot_quant_mt, plot_quant_mr, plot_quant_eq_g, plot_quant_eq_mt, plot_quant_eq_mr))
     
     # para que um subplot não sobreponha o outro, espaço entre os subplots
-    fig.subplots_adjust(hspace=0.5)
+    fig.subplots_adjust(hspace=0.75)
     
     # para não ocultar o xlabel 
-    if (flag_subplot == 1):fig.subplots_adjust(bottom=0.15)
+    if (flag_subplot == 1):fig.subplots_adjust(bottom=0.2)
     #plt.tight_layout()
+    #plt.margins(1)
     
     im_buffer = BytesIO()
     canvas = pylab.get_current_fig_manager().canvas
