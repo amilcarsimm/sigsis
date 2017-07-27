@@ -25,7 +25,7 @@ import time
 #===============================================================================
 graficos = FileSystemStorage(location='/static/graficos')
 
-# para evitar erros de renderização por gráficos com muitos dados 
+# para evitar erros de renderização por gráficos com muitos dados
 mpl.rcParams['agg.path.chunksize'] = 20000# conforme http://matplotlib.org/users/customizing.html
 
 S_NPF_CHOICES = (
@@ -33,11 +33,12 @@ S_NPF_CHOICES = (
                 ('cos','cos'),
                 ('sin','sen'),
                 ('sinc','sinc'),
+                ('sinc2','sinc²'),
                 ('sawtooth','serra'),
                 ('square','quadrada'),
                 ('triangle','triangular')
                 )
-                
+
 # para um complemento para o nome do arquivo do gráfico
 def mk_str(size):
 
@@ -45,13 +46,13 @@ def mk_str(size):
     #chars.extend([i for i in string.ascii_letters])
     chars.extend([i for i in string.digits])
     image_random = ''
-    
+
     for i in range(0, size):
         image_random += chars[random.randint(0,9)]
-        
+
         random.seed = int(time.time())#inicia a semente dos número pseudo randômicos
         random.shuffle(chars)
-    
+
     return image_random
 
 class Simulador(forms.Form):
@@ -73,7 +74,7 @@ class Simulador(forms.Form):
     niveis = forms.CharField(label='Níveis de Quantização', help_text='Para o Quantizador Genérico. Em ordem crescente e separados por espaço em branco.', max_length=100, widget=forms.TextInput(attrs={'required': True, 'strip': True, 'tabindex':11}))
     limiar_inf = forms.FloatField(label='Limiar inferior do nível [0-1]', help_text='Para o Quantizador Genérico. O número entre 0 e 1, refere-se a fração ou percentual para o limiar inferior do nível. Default: metade ou 0,5.', min_value=0.0, max_value=1.0, widget=forms.NumberInput(attrs={'required': True, 'class':'input_menor', 'step': '0.1', 'tabindex':11}))
     plot_sinal = forms.BooleanField(label='Sinal [Vermelho]', required=False, widget=forms.CheckboxInput(attrs={'tabindex':11}))
-    plot_fourier = forms.BooleanField(label='Transformada rápida de Fourier [Azul]', required=False, widget=forms.CheckboxInput(attrs={'tabindex':11}))
+    plot_fourier = forms.BooleanField(label='Transformada de Fourier [Azul]', required=False, widget=forms.CheckboxInput(attrs={'tabindex':11}))
     plot_amostras = forms.BooleanField(label='Amostras [Verde - Tracejado]', required=False, widget=forms.CheckboxInput(attrs={'tabindex':11}))
     plot_quant_g = forms.BooleanField(label='Sinal Quantizado - Genérico [Ciano]', required=False, widget=forms.CheckboxInput(attrs={'tabindex':11}))
     plot_quant_mt = forms.BooleanField(label='Sinal Quantizado <i>Mid-tread</i> [Azul]', required=False, widget=forms.CheckboxInput(attrs={'tabindex':11}))
@@ -82,11 +83,11 @@ class Simulador(forms.Form):
     plot_quant_eq_mr = forms.BooleanField(label='Erro de Quantização <i>Mid-rise</i> [Preto]', required=False, widget=forms.CheckboxInput(attrs={'tabindex':11}))
     plot_quant_eq_g = forms.BooleanField(label='Erro de Quantização Genérico [Cinza]', required=False, widget=forms.CheckboxInput(attrs={'tabindex':11}))
     # imagem
-    random_image = forms.CharField(widget=forms.HiddenInput(), required=False)    
+    random_image = forms.CharField(widget=forms.HiddenInput(), required=False)
 
 # definindo os valores iniciais
 im = str(mk_str(8))# gerará um número com 8 dígitos para complementar o nome do gráfico
-default_data = {'titulo': 'Gráfico', 't_start': -0.025, 't_stop': 0.125, 'dc': 0, 'ampl': 1, 's_npf': 'cos', 'freq': 10.0, 'desl': 0, 'fs': 80.0, 'random_image': im, 'quantiza':8, 'niveis':'-0,95 -0,5 0,1 0,25 0,7', 'limiar_inf':'0.5'}# valores iniciais do simulador 'yrotulo': 'f(t) [V]', 'xrotulo': 't [s]'
+default_data = {'titulo': 'Gráfico', 't_start': -0.5, 't_stop': 0.5, 'dc': 0, 'ampl': 1, 's_npf': 'cos', 'freq': 5.0, 'desl': 0, 'fs': 40.0, 'random_image': im, 'quantiza':8, 'niveis':'-0,95 -0,5 0,1 0,25 0,7', 'limiar_inf':'0.5'}# valores iniciais do simulador 'yrotulo': 'f(t) [V]', 'xrotulo': 't [s]'
 
 def get_simulador(request):
     #  Processa o formulário do simulador
@@ -96,8 +97,6 @@ def get_simulador(request):
         # check whether it's valid:
         if form.is_valid():
             titulo = form.cleaned_data['titulo']
-            #xrotulo = form.cleaned_data['xrotulo']
-            #yrotulo = form.cleaned_data['yrotulo']
             t_start = form.cleaned_data['t_start']
             t_stop = form.cleaned_data['t_stop']
             dc = form.cleaned_data['dc']
@@ -119,15 +118,15 @@ def get_simulador(request):
             plot_quant_eq_mt = form.cleaned_data['plot_quant_eq_mt']
             plot_quant_eq_mr = form.cleaned_data['plot_quant_eq_mr']
             random_image = form.cleaned_data['random_image']
-            
+
             # caso o início do gráfico seja maior que o fim
             if t_start >= t_stop:
                 return Simulador(request.POST, label_suffix=':')
 
-            showimage(request, t_start, t_stop, dc, ampl, freq, desl, fs, s_npf, titulo, plot_sinal, plot_fourier, plot_amostras, plot_quant_g, plot_quant_mt, plot_quant_mr, plot_quant_eq_g, plot_quant_eq_mt, plot_quant_eq_mr, quantiza, niveis, limiar_inf, random_image)#xrotulo, yrotulo, 
-            
+            showimage(request, t_start, t_stop, dc, ampl, freq, desl, fs, s_npf, titulo, plot_sinal, plot_fourier, plot_amostras, plot_quant_g, plot_quant_mt, plot_quant_mr, plot_quant_eq_g, plot_quant_eq_mt, plot_quant_eq_mr, quantiza, niveis, limiar_inf, random_image)#xrotulo, yrotulo,
+
             return Simulador(request.POST, label_suffix=':')
-                    
+
     # ao acessar a página pela 1a vez
     else:
         return Simulador(default_data, label_suffix=':')
@@ -135,16 +134,16 @@ def get_simulador(request):
 
 def constroi_onda_amostras(request, t_start, t_stop, dc, ampl, freq, desl, fs, s_npf):
     # Constrói o sinal e suas amostras
-    
+
     # converte o recebido do simulador para float e cria os arange, para o sinal e para as amostras
     t_start_c = float(t_start)# forma para conversão para float
     t_stop_c = t_stop.__float__()# outra forma para conversão para float
-    
+
     t_step = 1 / (100*float(freq))
     fs_c = float(fs)
     t = arange(t_start_c, t_stop_c, t_step)
     t2 = arange(t_start_c, t_stop_c, 1/fs_c)
-    
+
     # verifica o tipo de onda e constrói o sinal e as amostras
     if str(s_npf)=='cos':
         s = float(dc) + float(ampl) * cos(2 * pi * float(freq) * (t + float(desl)))
@@ -153,8 +152,11 @@ def constroi_onda_amostras(request, t_start, t_stop, dc, ampl, freq, desl, fs, s
         s = float(dc) + float(ampl) * sin(2 * pi * float(freq) * (t + float(desl)))
         s2 = float(dc) + float(ampl) * sin(2 * pi * float(freq) * (t2 + float(desl)))
     elif str(s_npf)=='sinc':
-        s = float(dc) + float(ampl) * sinc(2 * pi * float(freq) * (t + float(desl)))
-        s2 = float(dc) + float(ampl) * sinc(2 * pi * float(freq) * (t2 + float(desl)))
+        s = float(dc) + float(ampl) * sinc(2 * float(freq) * (t + float(desl)))
+        s2 = float(dc) + float(ampl) * sinc(2 * float(freq) * (t2 + float(desl)))
+    elif str(s_npf)=='sinc2':
+        s = float(dc) + float(ampl) * sinc(2 * float(freq) * (t + float(desl)))**2
+        s2 = float(dc) + float(ampl) * sinc(2 * float(freq) * (t2 + float(desl)))**2
     elif str(s_npf)=='sawtooth':
         s = float(dc) + float(ampl) * sawtooth(2 * pi * float(freq) * (t + float(desl)), width=1)
         s2 = float(dc) + float(ampl) * sawtooth(2 * pi * float(freq) * (t2 + float(desl)), width=1)
@@ -168,13 +170,13 @@ def constroi_onda_amostras(request, t_start, t_stop, dc, ampl, freq, desl, fs, s
 
     return s, t, s2, t2
 
-def verifica_niveis(request, dc, ampl, niveis):                                        
+def verifica_niveis(request, dc, ampl, niveis):
     # verifica e trata o campo 'Níveis de Quantização para o Quantizador Genérico
     # retira espaços em branco do final e no inicio
     niveis = niveis.strip()
     # troca a vírgula por ponto
     niveis = niveis.replace(',','.')
-    
+
     # verificaos caracteres
     if niveis.replace('-','').replace('.','').replace(' ','').isdigit() and (niveis.find('--')==-1) and (niveis.find('- ')==-1) and (niveis.find('..')==-1) and (niveis.find('. ')==-1):
         # separa os termos
@@ -184,7 +186,7 @@ def verifica_niveis(request, dc, ampl, niveis):
             if ((e.find('-') > 0) or (e.count('-')>1)):
                 msg = 'Revise os dados\nno campo\n"Níveis de Quantização".\n\n Observe a posição\ndo sinal de negativo.'
                 return msg, niveis
-            
+
         # converte os termos para float
         niveis = [float(e) for e in niveis]
         # verifica ordenação crescente
@@ -197,14 +199,14 @@ def verifica_niveis(request, dc, ampl, niveis):
         msg = 'Revise os dados\nno campo\n"Níveis de Quantização".\n\nProvável erro de posicionamento\ndo sinal negativo ou vírgula.\n\nPossibilidade de caracter\ndo tipo "letra".'
         return msg, niveis
 
-    
-def quantizacao_niveis(request, s, s2, dc, ampl, quantiza, niveis, limiar_inf, plot_quant):      
+
+def quantizacao_niveis(request, s, s2, dc, ampl, quantiza, niveis, limiar_inf, plot_quant):
     # Parâmetros para o quantizador: passo, níveis e limiares dos níveis
     # constrói vetor com os limiares de quantização
-    
+
     # verifica o passo de quantização
     passo_quant = (amax(s) - amin(s))/quantiza #verifica a diferença entre o maior e o menor elemento de s e divide pelo n de níveis
-     
+
     # popula os vetores com os limiares (50% do nível) dos níveis de quantização mid-tread e mid-rise
     if(plot_quant == 'mt'): vetor_niveis_lim = [k*passo_quant/2 + amin(s) for k in range(int(quantiza*2-1))]
     if(plot_quant == 'mr'): vetor_niveis_lim = [k*passo_quant/2 + amin(s) + passo_quant*0.5 for k in range(int(quantiza*2-1))]
@@ -222,12 +224,12 @@ def quantizacao_niveis(request, s, s2, dc, ampl, quantiza, niveis, limiar_inf, p
     return vetor_niveis_lim
 
 def quantizacao_vetor(request, s, s2,  dc, ampl, quantiza, niveis, limiar_inf, plot_quant):
-    
+
     s3 = [] # este será o vetor para as amostras quantizadas
     eq = [] # este será o vetor para os erros de quantização
-    
+
     vetor_niveis_lim = quantizacao_niveis(request, s, s2, dc, ampl, quantiza, niveis, limiar_inf, plot_quant)
-    
+
     # vetor da quantização e dos erros de quantização
     for i in range(0, len(s2), 1):
         for j in range(0, len(vetor_niveis_lim)-2,2):
@@ -254,30 +256,39 @@ def titula_grafico(request, dc, ampl, freq, desl, fs, s_npf, titulo, plot_sinal,
     # Constrói os títulos do gráfico
     if dc != 0: str_dc = str(dc) + '+'
     else: str_dc = ''
-    
+
     if (ampl < 0 and ampl != -1): str_ampl = '(' + str(ampl) + ')'
     elif (ampl < 0 and ampl == -1): str_ampl = '-'
     elif (ampl > 0 and ampl != 1): str_ampl = str(ampl)
-    else: str_ampl = '' 
-    
-    if desl < 0: str_desl = str(desl)
-    elif desl > 0: str_desl = '+ ' + str(desl)    
-    else: str_desl = ' + 0'
-        
+    else: str_ampl = ''
+
+    if desl == 0: str_desl = 't'
+    elif desl > 0: str_desl = '*(t + ' + str(desl) + ')'
+    else: str_desl = '*(t ' + str(desl) + ')'
+
     # título do gráfico
     # tratando valores negativos e zerados de dc, amplitude e deslocamento, no título
-    
+
     flag_subplot = subplot_image(request, plot_sinal, plot_fourier, plot_amostras, plot_quant_g, plot_quant_mt, plot_quant_mr, plot_quant_eq_g, plot_quant_eq_mt, plot_quant_eq_mr)
-    
-    if(flag_subplot == 3):
-        titulo = ('' + titulo + '\nFunção $f(t) = ' + str_dc + str_ampl + str(s_npf) + '(2\pi' + str(freq) + '*(t' + str_desl + '))$ e Transformada rápida de Fourier')
-    elif(flag_subplot == 2):
-        titulo = ('' + titulo + '\nTransformada rápida de Fourier da função $f(t) = ' + str_dc + str_ampl + str(s_npf) + '(2\pi' + str(freq) + '*(t' + str_desl + '))$')
+
+    if(flag_subplot == 3 and (s_npf!='sinc2' and s_npf!='sinc')):
+        titulo = ('' + titulo + '\nFunção $f(t) = ' + str_dc + str_ampl + str(s_npf) + '(2\pi' + str(freq) + str_desl + ')$ e Transformada de Fourier')
+    elif(flag_subplot == 3 and s_npf=='sinc'):
+        titulo = ('' + titulo + '\nFunção $f(t) = ' + str_dc + str_ampl + str(s_npf) + '(2*' + str(freq) + str_desl + ')$ e Transformada de Fourier')
+    elif(flag_subplot == 3 and s_npf=='sinc2'):
+        titulo = ('' + titulo + '\nFunção $f(t) = ' + str_dc + str_ampl + 'sinc(2*' + str(freq) + str_desl + ')²$ e Transformada de Fourier')
+    elif(flag_subplot == 2  and not (s_npf!='sinc2' or s_npf!='sinc')):
+        titulo = ('' + titulo + '\nTransformada de Fourier da função $f(t) = ' + str_dc + str_ampl + str(s_npf) + '(2\pi' + str(freq) + str_desl + ')$')
+    elif(flag_subplot == 2 and s_npf=='sinc'):
+        titulo = ('' + titulo + '\nTransformada de Fourier da função $f(t) = ' + str_dc + str_ampl + str(s_npf) + '(2*' + str(freq) + str_desl + ')$')
+    elif(flag_subplot == 2 and s_npf=='sinc2'):
+        titulo = ('' + titulo + '\nTransformada de Fourier da função $f(t) = ' + str_dc + str_ampl + 'sinc(2*' + str(freq) + str_desl + ')²$')
     else:
-        titulo = ('' + titulo + '\n $f(t) = ' + str_dc + str_ampl + str(s_npf) + '(2\pi' + str(freq) + '*(t' + str_desl + '))$')    
-    
+        if(s_npf=='sinc'):titulo = ('' + titulo + '\n $f(t) = ' + str_dc + str_ampl + str(s_npf) + '(2*' + str(freq) + str_desl + ')$')
+        elif(s_npf=='sinc2'):titulo = ('' + titulo + '\n $f(t) = ' + str_dc + str_ampl + 'sinc(2*' + str(freq) + str_desl + ')²$')
+        else:titulo = ('' + titulo + '\n $f(t) = ' + str_dc + str_ampl + str(s_npf) + '(2\pi' + str(freq) + str_desl + ')$')
     return titulo
-    
+
 def subplot_image(request, plot_sinal, plot_fourier, plot_amostras, plot_quant_g, plot_quant_mt, plot_quant_mr, plot_quant_eq_g, plot_quant_eq_mt, plot_quant_eq_mr):
     #verifica a necessidade de subplot
     # flag para verificação da necessidade de subplot
@@ -285,17 +296,17 @@ def subplot_image(request, plot_sinal, plot_fourier, plot_amostras, plot_quant_g
     if(plot_sinal or plot_amostras or plot_quant_g or plot_quant_mt or plot_quant_mr or plot_quant_eq_g or plot_quant_eq_mt or plot_quant_eq_mr):  flag_subplot += 1
     if(plot_fourier):  flag_subplot += 2
     return flag_subplot
-    
+
 def showimage(request, t_start, t_stop, dc, ampl, freq, desl, fs, s_npf, titulo, plot_sinal, plot_fourier, plot_amostras, plot_quant_g, plot_quant_mt, plot_quant_mr, plot_quant_eq_g, plot_quant_eq_mt, plot_quant_eq_mr, quantiza, niveis, limiar_inf, random_image):
     # Constrói a imagem do gráfico
     s = constroi_onda_amostras(request, t_start, t_stop, dc, ampl, freq, desl, fs, s_npf)[0]
     t = constroi_onda_amostras(request, t_start, t_stop, dc, ampl, freq, desl, fs, s_npf)[1]
     s2 = constroi_onda_amostras(request, t_start, t_stop, dc, ampl, freq, desl, fs, s_npf)[2]
     t2 = constroi_onda_amostras(request, t_start, t_stop, dc, ampl, freq, desl, fs, s_npf)[3]
-    
+
     verifica_niveis(request, dc, ampl, niveis)
     flag_subplot = subplot_image(request, plot_sinal, plot_fourier, plot_amostras, plot_quant_g, plot_quant_mt, plot_quant_mr, plot_quant_eq_g, plot_quant_eq_mt, plot_quant_eq_mr)
-    
+
     # para não embaralhar os rótulos do eixo x
     t2_x = t2
     if (len(t2)>30 and len(t2)<50):
@@ -305,12 +316,12 @@ def showimage(request, t_start, t_stop, dc, ampl, freq, desl, fs, s_npf, titulo,
         t2_x = []
         for i in frange(t2[0], t2[len(t2)-1], 4/fs):t2_x.append(i)
     else:t2_x = t2
-               
+
     fig = plt.figure() # para adicionar o title a figura e não aos subplots ou plot
 
     # para plotar os múltiplos sinais
     # verifica arrays muito longos
-    
+
     if len(s) > 12000 or len(t2) > 1000:
         msg = 'Simulação sem possibilidade\nde visualização.\nVerifique os parâmetros.'
         plt.text(0.5, 0.5, msg, ha="center", va="center", size=20, color='k', bbox=dict(boxstyle="circle, pad=0.5", fc="r", ec="y", lw=1, alpha=0.5)), tick_params(direction='out', length=6, labelbottom="off", labelleft="off")
@@ -328,21 +339,17 @@ def showimage(request, t_start, t_stop, dc, ampl, freq, desl, fs, s_npf, titulo,
             plt.grid(which='major', axis='both', color='k', linestyle=':')
         if (plot_fourier):
             # construção da transformada
-            t_step = 1 / (100*float(freq))
-            t3 = fftpack.fftfreq(s.size, d=t_step)
-            s5 = fftpack.fft(s)
-            pidxs = np.where(t3 > 0)
-            freqs = t3[pidxs]
-            power = np.abs(s5)[pidxs]
-            
+            fa = 100*freq
+            nfft = 2**12
+            f = np.arange(-nfft/2, nfft/2) * (fa / nfft)
+            s5 = fftpack.fftshift(np.abs(fftpack.fft(s, n=nfft))) / fa
             # para plotagem
             if (flag_subplot == 3): plt.subplot(212)
-            plot(freqs, power, '-', linewidth=1.5, color='blue', label='Transformada rápida de Fourier')
-            #plot(t3, s5, '-', linewidth=1.5, color='blue', label='Transformada rápida de Fourier')
-            plt.ylabel('$F(\omega)$')
-            plt.xlabel('$\omega$')
+            plot(f, s5, '-', linewidth=1.5, color='blue', label='Transformada de Fourier')
+            plt.ylabel('$F(f)$')
+            plt.xlabel('$f$')
             plt.legend(fancybox=True, loc='upper right', shadow=True, fontsize='small', ncol=2)
-            plt.xlim(min(freqs), max(freqs))
+            plt.xlim([-4*freq, 4*freq])
             plt.grid(which='major', axis='both', color='k', linestyle=':')
         if(plot_amostras):
             if (flag_subplot == 3): plt.subplot(211)
@@ -419,36 +426,33 @@ def showimage(request, t_start, t_stop, dc, ampl, freq, desl, fs, s_npf, titulo,
         # caso nenhuma simulação seja marcada
         if(not plot_sinal and not plot_fourier and not plot_amostras and not plot_quant_g and not plot_quant_mt and not plot_quant_mr and not plot_quant_eq_g and not plot_quant_eq_mt and not plot_quant_eq_mr):
             msg = 'Nenhuma simulação\nfoi selecionada.'
-            #plt.text((t_stop+t_start)/2, (dc+ampl/2), msg, ha="center", va="center", size=20, color='red', bbox=dict(boxstyle="circle, pad=0.5", fc="yellow", ec="r", lw=1, alpha=0.5)), tick_params(direction='out', length=6, width=2, colors='r')
             plt.text(0.5, 0.5, msg, ha="center", va="center", size=20, color='k', bbox=dict(boxstyle="circle, pad=0.5", fc="yellow", ec="y", lw=1, alpha=0.5)), tick_params(direction='out', length=6, labelbottom="off", labelleft="off")
-        
+
     # Para a imagem do gráfico
     # para que o gráfico tem uma margem em baixo e outra um pouco maior em cima para a legenda
     ymin, ymax = ylim()   # return the current ylim
     ylim(ymin - 0.1 * (ymax - ymin), ymax + 0.35 * (ymax - ymin))  # set the ylim to ymin, ymax
-    
+
     # título
     fig.suptitle(titula_grafico(request, dc, ampl, freq, desl, fs, s_npf, titulo, plot_sinal, plot_fourier, plot_amostras, plot_quant_g, plot_quant_mt, plot_quant_mr, plot_quant_eq_g, plot_quant_eq_mt, plot_quant_eq_mr))
-    
+
     # para que um subplot não sobreponha o outro, espaço entre os subplots
     fig.subplots_adjust(hspace=0.75)
-    
-    # para não ocultar o xlabel 
+
+    # para não ocultar o xlabel
     if (flag_subplot == 1):fig.subplots_adjust(bottom=0.2)
-    #plt.tight_layout()
-    #plt.margins(1)
-    
+
     im_buffer = BytesIO()
     canvas = pylab.get_current_fig_manager().canvas
     canvas.draw()
-    
+
     pilImage = Image.frombytes('RGB', canvas.get_width_height(), canvas.tostring_rgb())
-    
+
     pilImage.save(im_buffer, 'PNG')
-    
+
     path_graph = STATIC_ROOT + 'graficos/graph' + str(random_image)+'.png'
-    
+
     pylab.savefig(path_graph)
     pylab.close()
-    
+
     return path_graph
