@@ -155,8 +155,8 @@ def constroi_onda_amostras(request, t_start, t_stop, dc, ampl, freq, desl, fs, s
         s = float(dc) + float(ampl) * sinc(2 * float(freq) * (t + float(desl)))
         s2 = float(dc) + float(ampl) * sinc(2 * float(freq) * (t2 + float(desl)))
     elif str(s_npf)=='sinc2':
-        s = float(dc) + float(ampl) * sinc(2 * float(freq) * (t + float(desl)))**2
-        s2 = float(dc) + float(ampl) * sinc(2 * float(freq) * (t2 + float(desl)))**2
+        s = float(dc) + float(ampl) * sinc(float(freq) * (t + float(desl)))**2
+        s2 = float(dc) + float(ampl) * sinc(float(freq) * (t2 + float(desl)))**2
     elif str(s_npf)=='sawtooth':
         s = float(dc) + float(ampl) * sawtooth(2 * pi * float(freq) * (t + float(desl)), width=1)
         s2 = float(dc) + float(ampl) * sawtooth(2 * pi * float(freq) * (t2 + float(desl)), width=1)
@@ -276,16 +276,16 @@ def titula_grafico(request, dc, ampl, freq, desl, fs, s_npf, titulo, plot_sinal,
     elif(flag_subplot == 3 and s_npf=='sinc'):
         titulo = ('' + titulo + '\nFunção $f(t) = ' + str_dc + str_ampl + str(s_npf) + '(2*' + str(freq) + str_desl + ')$ e Transformada de Fourier')
     elif(flag_subplot == 3 and s_npf=='sinc2'):
-        titulo = ('' + titulo + '\nFunção $f(t) = ' + str_dc + str_ampl + 'sinc(2*' + str(freq) + str_desl + ')²$ e Transformada de Fourier')
+        titulo = ('' + titulo + '\nFunção $f(t) = ' + str_dc + str_ampl + 'sinc(' + str(freq) + str_desl + ')²$ e Transformada de Fourier')
     elif(flag_subplot == 2  and not (s_npf!='sinc2' or s_npf!='sinc')):
         titulo = ('' + titulo + '\nTransformada de Fourier da função $f(t) = ' + str_dc + str_ampl + str(s_npf) + '(2\pi' + str(freq) + str_desl + ')$')
     elif(flag_subplot == 2 and s_npf=='sinc'):
         titulo = ('' + titulo + '\nTransformada de Fourier da função $f(t) = ' + str_dc + str_ampl + str(s_npf) + '(2*' + str(freq) + str_desl + ')$')
     elif(flag_subplot == 2 and s_npf=='sinc2'):
-        titulo = ('' + titulo + '\nTransformada de Fourier da função $f(t) = ' + str_dc + str_ampl + 'sinc(2*' + str(freq) + str_desl + ')²$')
+        titulo = ('' + titulo + '\nTransformada de Fourier da função $f(t) = ' + str_dc + str_ampl + 'sinc(' + str(freq) + str_desl + ')²$')
     else:
         if(s_npf=='sinc'):titulo = ('' + titulo + '\n $f(t) = ' + str_dc + str_ampl + str(s_npf) + '(2*' + str(freq) + str_desl + ')$')
-        elif(s_npf=='sinc2'):titulo = ('' + titulo + '\n $f(t) = ' + str_dc + str_ampl + 'sinc(2*' + str(freq) + str_desl + ')²$')
+        elif(s_npf=='sinc2'):titulo = ('' + titulo + '\n $f(t) = ' + str_dc + str_ampl + 'sinc(' + str(freq) + str_desl + ')²$')
         else:titulo = ('' + titulo + '\n $f(t) = ' + str_dc + str_ampl + str(s_npf) + '(2\pi' + str(freq) + str_desl + ')$')
     return titulo
 
