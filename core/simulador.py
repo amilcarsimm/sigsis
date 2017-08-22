@@ -66,7 +66,7 @@ class Simulador(forms.Form):
     dc = forms.FloatField(label='Componente de tensão contínua <i>DC</i> [V]', widget=forms.NumberInput(attrs={'required': True, 'class':'input_menor', 'tabindex':6}))
     ampl = forms.FloatField(label='Amplitude <i>A</i> [V]', widget=forms.NumberInput(attrs={'required': True, 'class':'input_menor', 'tabindex':7}))
     s_npf = forms.ChoiceField(label='Forma de Onda', choices=S_NPF_CHOICES, widget=forms.Select(attrs={'required': True, 'tabindex':8}))
-    freq = forms.FloatField(label='Frequência Fundamental <i>f</i> [Hz]', widget=forms.NumberInput(attrs={'required': True, 'class':'input_menor', 'tabindex':9}))
+    freq = forms.FloatField(label='Frequência Fundamental <i>f</i> [Hz]', min_value=2, widget=forms.NumberInput(attrs={'required': True, 'class':'input_menor', 'tabindex':9}))
     desl = forms.FloatField(label='Deslocamento no tempo [s]', widget=forms.NumberInput(attrs={'required': True, 'class':'input_menor', 'tabindex':10}))
     # fieldset "Simulação"
     fs = forms.FloatField(label='Taxa de amostragem <i>f</i><sub>s</sub> [Hz]', widget=forms.NumberInput(attrs={'required': True, 'class':'input_menor', 'tabindex':11}))

@@ -4,9 +4,9 @@ from django.contrib import admin
 from core.models import Modulo, Roteiro, Index
 from mce_filebrowser.admin import MCEFilebrowserAdmin
 
-admin.site.site_header = "Tópicos de Sinais e Sistemas"
+admin.site.site_header = "Tópicos de Conhecimento"
 admin.site.index_title = "Administração do Site"
-admin.site.site_title = "Tópicos de Sinais e Sistemas"
+admin.site.site_title = "Tópicos de Conhecimento"
 #admin.site.site_url = ""
 
 class MCEFilebrowserAdmin(admin.ModelAdmin):
